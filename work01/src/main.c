@@ -28,27 +28,85 @@ char *tokenstr[NUMOFTOKEN + 1] = {
     "break"};
 
 int main(int nc, char *np[]) {
-    int token, i;
+  int token, i;
 
-    if (nc < 2) {
-        error("File name is not given.");
-        return 0;
-    }
-    if (init_scan(np[1]) < 0) {
-        error("Cannot open input file.");
-        end_scan();
-        return 0;
-    }
-    /* 作成する部分：トークンカウント用の配列？を初期化する */
-    while ((token = scan()) >= 0) {
-        /* 作成する部分：トークンをカウントする */
-    }
-    end_scan();
-    /* 作成する部分:カウントした結果を出力する */
+  if (nc < 2) {
+    error("File name is not given.");
     return 0;
+  }
+  if (init_scan(np[1]) < 0) {
+    error("Cannot open input file.");
+    end_scan();
+    return 0;
+  }
+  /* 作成する部分：トークンカウント用の配列？を初期化する */
+  for (i = 0; i <= NUMOFTOKEN; i++) numtoken[i] = 0;
+
+  while ((token = scan()) >= 0) {
+    /* 作成する部分：トークンをカウントする */
+    numtoken[token]++;
+    switch (token) {
+      case TNAME:
+      case TPROGRAM:
+      case TVAR:
+      case TARRAY:
+      case TOF:
+      case TBEGIN:
+      case TEND:
+      case TIF:
+      case TTHEN:
+      case TELSE:
+      case TPROCEDURE:
+      case TRETURN:
+      case TCALL:
+      case TWHILE:
+      case TDO:
+      case TNOT:
+      case TOR:
+      case TDIV:
+      case TAND:
+      case TCHAR:
+      case TINTEGER:
+      case TBOOLEAN:
+      case TREADLN:
+      case TWRITELN:
+      case TTRUE:
+      case TFALSE:
+      case TNUMBER:
+      case TSTRING:
+      case TPLUS:
+      case TMINUS:
+      case TSTAR:
+      case TEQUAL:
+      case TNOTEQ:
+      case TLE:
+      case TLEEQ:
+      case TGR:
+      case TGREQ:
+      case TLPAREN:
+      case TRPAREN:
+      case TLSQPAREN:
+      case TRSQPAREN:
+      case TASSIGN:
+      case TDOT:
+      case TCOMMA:
+      case TCOLON:
+      case TSEMI:
+      case TREAD:
+      case TWRITE:
+      case TBREAK:
+    }
+  }
+  end_scan();
+  /* 作成する部分:カウントした結果を出力する */
+  for (i = 0; i <= NUMOFTOKEN; i++) {
+    if (numtoken[i] == 0) continue;
+    printf("\"%s\" %d\n", tokenstr[i], numtoken[i]);
+  }
+  return 0;
 }
 
 int error(char *mes) {
-    fprintf(stderr, "\nERROR: %s\n", mes);
-    return S_ERROR;
+  fprintf(stderr, "\nERROR: %s\n", mes);
+  return S_ERROR;
 }
