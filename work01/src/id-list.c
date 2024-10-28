@@ -1,4 +1,4 @@
-﻿#include "scan.h"
+#include "scan.h"
 
 struct ID {
   char *name;

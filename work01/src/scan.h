@@ -2,6 +2,8 @@
 #define SCAN_H
 
 /* scan.h  */
+#include <ctype.h>    // add
+#include <stdbool.h>  // add
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,8 +68,8 @@
 #define S_ERROR -1
 
 extern struct KEY {
-    char *keyword;
-    int keytoken;
+  char *keyword;
+  int keytoken;
 } key[KEYWORDSIZE];
 
 extern int error(char *mes);
@@ -79,5 +81,15 @@ extern void end_scan(void);
 
 extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
+
+// original
+extern int is_keyword(char *);
+extern bool is_name(char *);
+extern bool is_number(char *);
+extern int append_char(char *, char);
+extern void skip_blank(void);
+extern void skip_bracket_comment(void);
+extern void skip_slash_comment(void);
+extern void break_line(void);
 
 #endif
