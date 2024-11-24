@@ -20,54 +20,97 @@ int init_scan(char* filename) {
 void end_scan() { fclose(fp); }
 
 int scan() {
-  // space or tab
-  skip_blank();
-  // comment
-  switch (cbuf) {
-    case '{':
-      skip_bracket_comment();
-      break;
-    case '/':
-      cbuf = fgetc(fp);
-      switch (cbuf) {
-        case '*':
-          skip_slash_comment();
-          break;
-        default:
-          snprintf(errmsg, MAXSTRSIZE, "cannot scan \'%c\'(ascii: %d)", cbuf,
-                   cbuf);
-          error(errmsg);
-          return S_ERROR;
-      }
-  }
   if (cbuf == EOF) return -1;
 
   int ret = 0;
 
   if (isalpha(cbuf)) {  // name or keyword
     do {
-      ret = append_char(string_attr, cbuf);
+      ret = push_char(string_attr, cbuf);
       if (ret == -1) return S_ERROR;
       cbuf = fgetc(fp);
     } while (isalnum(cbuf));
 
     ret = is_keyword(string_attr);
+    clear_string_attr();
     if (ret != -1)
       return ret;
     else
       return TNAME;
-
   } else if (isdigit(cbuf)) {  // number
     do {
-      ret = append_char(string_attr, cbuf);
+      ret = push_char(string_attr, cbuf);
       if (ret == -1) return S_ERROR;
       cbuf = fgetc(fp);
     } while (isdigit(cbuf));
     num_attr = atoi(string_attr);
+    clear_string_attr();
     return TNUMBER;
   } else {
-    // symbol
     switch (cbuf) {
+      // blank
+      case ' ':
+      case '\t':
+        skip_blank();
+        if (cbuf == EOF) return -1;
+        return 0;
+      // comment
+      case '{':
+        skip_bracket_comment();
+        return 0;
+      case '/':
+        cbuf = fgetc(fp);
+        switch (cbuf) {
+          case '*':
+            skip_slash_comment();
+            return 0;
+          default:
+            snprintf(errmsg, MAXSTRSIZE, "cannot scan \'%c\'(ascii: %d)", cbuf,
+                     cbuf);
+            error(errmsg);
+            return S_ERROR;
+        }
+      // string
+      case '\'':
+        while (1) {
+          switch (cbuf = fgetc(fp)) {
+            case EOF:
+              error("found an invalid apostorphy(\')");
+              return S_ERROR;
+            case '\'':
+              ret = push_char(string_attr, cbuf);
+              if (ret == -1) return S_ERROR;
+              switch (cbuf = fgetc(fp)) {
+                case '\'':
+                  ret = push_char(string_attr, cbuf);
+                  if (ret == -1) return S_ERROR;
+                  break;
+                default:
+                  ret = pop_char(string_attr);
+                  if (ret == -1) return S_ERROR;
+                  return TSTRING;
+              }
+            case '\n':
+              cbuf = fgetc(fp);
+              switch (cbuf) {
+                case '\r':  // LF+CR ???
+                  cbuf = fgetc(fp);
+                  break;
+                default:  // LF
+              }
+            case '\r':
+              cbuf = fgetc(fp);
+              switch (cbuf) {
+                case '\n':  // CR+LF
+                  cbuf = fgetc(fp);
+                  break;
+                default:  // CR
+              }
+              error("found a line break when scanning a string");
+              return S_ERROR;
+          }
+        }
+      // symbol
       case '+':
         cbuf = fgetc(fp);
         return TPLUS;
@@ -100,7 +143,6 @@ int scan() {
             cbuf = fgetc(fp);
             return TGREQ;
           default:
-            ungetc(cbuf, fp);
             return TGR;
         }
       case '(':
@@ -122,7 +164,6 @@ int scan() {
             cbuf = fgetc(fp);
             return TASSIGN;
           default:
-            ungetc(cbuf, fp);
             return TCOLON;
         }
       case ';':
@@ -134,6 +175,7 @@ int scan() {
       case ',':
         cbuf = fgetc(fp);
         return TCOMMA;
+      // line break
       case '\n':
         cbuf = fgetc(fp);
         switch (cbuf) {
@@ -163,15 +205,34 @@ int scan() {
   }
 }
 
-int append_char(char* str, char c) {
+int push_char(char* str, char c) {
   int len = strlen(str);
   if (len >= MAXSTRSIZE - 1) {
-    error("cannot append a charcter to str array");
+    error("cannot append a character to str array");
     return -1;
   }
   str[len] = c;
   str[len + 1] = '\0';
   return 0;
+}
+
+int pop_char(char* str) {
+  int res = 0;
+  int len = strlen(str);
+  if (len <= 0) {
+    error("cannot pop a character from str array");
+    return -1;
+  }
+
+  res = string_attr[len - 1];
+  string_attr[len - 1] = '\0';
+  return res;
+}
+
+void clear_string_attr() {
+  for (int i = 0; i < MAXSTRSIZE; i++) {
+    string_attr[i] = '\0';
+  }
 }
 
 int is_keyword(char* str) {
@@ -238,6 +299,9 @@ void skip_bracket_comment() {
         cbuf = fgetc(fp);
     }
   }
+
+  if (cbuf == EOF) return;
+  if (cbuf == '}') cbuf = fgetc(fp);
 }
 
 void skip_slash_comment() {
