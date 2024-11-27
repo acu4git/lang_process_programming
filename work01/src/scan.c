@@ -26,7 +26,7 @@ int scan() {
 
   if (isalpha(cbuf)) {  // name or keyword
     do {
-      ret = push_char(string_attr, cbuf);
+      ret = push_char(cbuf);
       if (ret == -1) return S_ERROR;
       cbuf = fgetc(fp);
     } while (isalnum(cbuf));
@@ -39,7 +39,7 @@ int scan() {
       return TNAME;
   } else if (isdigit(cbuf)) {  // number
     do {
-      ret = push_char(string_attr, cbuf);
+      ret = push_char(cbuf);
       if (ret == -1) return S_ERROR;
       cbuf = fgetc(fp);
     } while (isdigit(cbuf));
@@ -78,11 +78,11 @@ int scan() {
               error("found an invalid apostorphy(\')");
               return S_ERROR;
             case '\'':
-              ret = push_char(string_attr, cbuf);
+              ret = push_char(cbuf);
               if (ret == -1) return S_ERROR;
               switch (cbuf = fgetc(fp)) {
                 case '\'':
-                  ret = push_char(string_attr, cbuf);
+                  ret = push_char(cbuf);
                   if (ret == -1) return S_ERROR;
                   break;
                 default:
@@ -205,20 +205,20 @@ int scan() {
   }
 }
 
-int push_char(char* str, char c) {
-  int len = strlen(str);
+int push_char(char c) {
+  int len = strlen(string_attr);
   if (len >= MAXSTRSIZE - 1) {
     error("cannot append a character to str array");
     return -1;
   }
-  str[len] = c;
-  str[len + 1] = '\0';
+  string_attr[len] = c;
+  string_attr[len + 1] = '\0';
   return 0;
 }
 
-int pop_char(char* str) {
+int pop_char() {
   int res = 0;
-  int len = strlen(str);
+  int len = strlen(string_attr);
   if (len <= 0) {
     error("cannot pop a character from str array");
     return -1;
@@ -244,29 +244,29 @@ int is_keyword(char* str) {
 
 int get_linenum() { return linenum; }
 
-void break_line() {
-  switch (cbuf) {
-    case '\n':
-      cbuf = fgetc(fp);
-      switch (cbuf) {
-        case '\r':  // LF+CR ???
-          cbuf = fgetc(fp);
-          break;
-        default:  // LF
-      }
-      linenum++;
-      break;
-    case '\r':
-      cbuf = fgetc(fp);
-      switch (cbuf) {
-        case '\n':  // CR+LF
-          cbuf = fgetc(fp);
-          break;
-        default:  // CR
-      }
-      linenum++;
-  }
-}
+// void break_line() {
+//   switch (cbuf) {
+//     case '\n':
+//       cbuf = fgetc(fp);
+//       switch (cbuf) {
+//         case '\r':  // LF+CR ???
+//           cbuf = fgetc(fp);
+//           break;
+//         default:  // LF
+//       }
+//       linenum++;
+//       break;
+//     case '\r':
+//       cbuf = fgetc(fp);
+//       switch (cbuf) {
+//         case '\n':  // CR+LF
+//           cbuf = fgetc(fp);
+//           break;
+//         default:  // CR
+//       }
+//       linenum++;
+//   }
+// }
 
 void skip_blank() {
   while (cbuf != EOF && (cbuf == ' ' || cbuf == '\t')) cbuf = fgetc(fp);
