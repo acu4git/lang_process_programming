@@ -50,7 +50,7 @@ int main(int nc, char *np[]) {
   /* 作成する部分:カウントした結果を出力する */
   for (i = 1; i <= NUMOFTOKEN; i++) {
     if (numtoken[i] == 0) continue;
-    printf("\"%s\" %d\n", tokenstr[i], numtoken[i]);
+    printf("\"%-10s\"\t%d\n", tokenstr[i], numtoken[i]);
   }
   return 0;
 }

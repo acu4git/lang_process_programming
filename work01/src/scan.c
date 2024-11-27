@@ -8,6 +8,7 @@ static int linenum;
 
 int num_attr;
 char string_attr[MAXSTRSIZE] = "";
+char string_attr_buff[MAXSTRSIZE] = "";
 
 int init_scan(char* filename) {
   if ((fp = fopen(filename, "r")) == NULL) return S_ERROR;
@@ -25,6 +26,8 @@ int scan() {
   int ret = 0;
 
   if (isalpha(cbuf)) {  // name or keyword
+    strncpy(string_attr_buff, string_attr, MAXSTRSIZE);
+    clear_string_attr();
     do {
       ret = push_char(cbuf);
       if (ret == -1) return S_ERROR;
@@ -32,19 +35,22 @@ int scan() {
     } while (isalnum(cbuf));
 
     ret = is_keyword(string_attr);
-    clear_string_attr();
-    if (ret != -1)
-      return ret;
-    else
+    if (ret == -1) {
       return TNAME;
+    } else {
+      clear_string_attr();
+      strncpy(string_attr, string_attr_buff, MAXSTRSIZE);
+      return ret;
+    }
   } else if (isdigit(cbuf)) {  // number
+    clear_string_attr();
     do {
       ret = push_char(cbuf);
       if (ret == -1) return S_ERROR;
       cbuf = fgetc(fp);
     } while (isdigit(cbuf));
     num_attr = atoi(string_attr);
-    clear_string_attr();
+    if (num_attr > 32767) return error("number must not be larger than 32767");
     return TNUMBER;
   } else {
     switch (cbuf) {
@@ -72,11 +78,11 @@ int scan() {
         }
       // string
       case '\'':
+        clear_string_attr();
         while (1) {
           switch (cbuf = fgetc(fp)) {
             case EOF:
-              error("found an invalid apostorphy(\')");
-              return S_ERROR;
+              return error("found an invalid apostorphy(\')");
             case '\'':
               ret = push_char(cbuf);
               if (ret == -1) return S_ERROR;
@@ -86,10 +92,11 @@ int scan() {
                   if (ret == -1) return S_ERROR;
                   break;
                 default:
-                  ret = pop_char(string_attr);
+                  ret = pop_char();
                   if (ret == -1) return S_ERROR;
                   return TSTRING;
               }
+              break;
             case '\n':
               cbuf = fgetc(fp);
               switch (cbuf) {
@@ -98,6 +105,7 @@ int scan() {
                   break;
                 default:  // LF
               }
+              return error("found a line break when scanning a string");
             case '\r':
               cbuf = fgetc(fp);
               switch (cbuf) {
@@ -106,8 +114,11 @@ int scan() {
                   break;
                 default:  // CR
               }
-              error("found a line break when scanning a string");
-              return S_ERROR;
+              return error("found a line break when scanning a string");
+            default:
+              ret = push_char(cbuf);
+              if (ret == -1) return S_ERROR;
+              break;
           }
         }
       // symbol
@@ -243,30 +254,6 @@ int is_keyword(char* str) {
 }
 
 int get_linenum() { return linenum; }
-
-// void break_line() {
-//   switch (cbuf) {
-//     case '\n':
-//       cbuf = fgetc(fp);
-//       switch (cbuf) {
-//         case '\r':  // LF+CR ???
-//           cbuf = fgetc(fp);
-//           break;
-//         default:  // LF
-//       }
-//       linenum++;
-//       break;
-//     case '\r':
-//       cbuf = fgetc(fp);
-//       switch (cbuf) {
-//         case '\n':  // CR+LF
-//           cbuf = fgetc(fp);
-//           break;
-//         default:  // CR
-//       }
-//       linenum++;
-//   }
-// }
 
 void skip_blank() {
   while (cbuf != EOF && (cbuf == ' ' || cbuf == '\t')) cbuf = fgetc(fp);
