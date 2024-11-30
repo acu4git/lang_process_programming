@@ -7,3 +7,4 @@
 *.a
 *.o
 test_results
+*.pdf
