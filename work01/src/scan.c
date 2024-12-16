@@ -50,7 +50,7 @@ int scan() {
       cbuf = fgetc(fp);
     } while (isdigit(cbuf));
     num_attr = atoi(string_attr);
-    if (num_attr > 32767) return error("number must not be larger than 32767");
+    if (num_attr > 32768) return error("number must not be larger than 32768");
     return TNUMBER;
   } else {
     switch (cbuf) {

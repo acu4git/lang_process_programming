@@ -5,5 +5,9 @@ all: tc
 tc: ${OBJS}
 	${CC}  -o $@ $^
 
+coverage:
+	- ${CC} -coverage -c *.c
+	- ${CC} -coverage -o tc *.o
+
 clean:
-	${RM} *.o tc *~
+	${RM} *.o *.gcov *.gcda *.gcno tc *~

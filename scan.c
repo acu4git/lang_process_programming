@@ -11,11 +11,11 @@ char string_attr[MAXSTRSIZE];  // When the return value of scan() is "name" or
                                // "string", the actual string is stored.
 int num_attr = 0;  // When the return value of scan() is an "unsigned integer",
                    // the value is retained.
-static int cbuf;  // Holds the character being scanned. Used to determine the
-                  // character.
+static int cbuf;   // Holds the character being scanned. Used to determine the
+                   // character.
 static int next_cbuf = '\0';  // Holds the next character to be scanned. Read
                               // ahead. Initial value is NULL.
-static int linenum = 1;  // Hold current line number
+static int linenum = 1;       // Hold current line number
 static int token_linenum =
     0;  // Holds the line number where the scanned token was located
 
@@ -30,9 +30,9 @@ static int keyword(
                    // token code if it is a keyword. If it is not a keyword,
                    // treat it as a name token.
 static int string_attr_push(const char c);  // Add a token to the string
-static void next();  // Function to look ahead to the next character
-int get_linenum();   // returns the number of the row when the token most
-                    // recently returned by scan() was present
+static void next();        // Function to look ahead to the next character
+int get_linenum();         // returns the number of the row when the token most
+                           // recently returned by scan() was present
 void set_token_linenum();  // set current linenum to token_linenum
 int end_scan();            // Close the file
 

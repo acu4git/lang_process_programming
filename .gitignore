@@ -8,3 +8,10 @@
 *.o
 test_results
 *.pdf
+*.zip
+
+build
+
+*.gcov
+*.gcda
+*.gcno
