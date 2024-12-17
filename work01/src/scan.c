@@ -1,7 +1,6 @@
 #include "scan.h"
 
 static FILE* fp;
-static int curr_ch;
 static int cbuf;
 static char errmsg[MAXSTRSIZE] = "";
 static int linenum;
