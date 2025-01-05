@@ -96,57 +96,89 @@ end\_scan関数内で行う．ここでは，mpplファイルを閉じる処理�
 
 \subsubsection{clear\_string\_attr}
 \begin{description}
-  \item[機能] スキャナーを初期化する
-  \item[引数] ファイル名(char型へのポインタ)
-  \item[戻り値] 成功の場合は0，ファイルオープンに失敗した場合は-1
+  \item[機能] string\_attrの中身を終端文字で埋めつくす（消去処理）
+  \item[引数] なし
+  \item[戻り値] なし
 \end{description}
 
 \subsubsection{is\_keyword}
 \begin{description}
-  \item[機能] スキャナーを初期化する
-  \item[引数] ファイル名(char型へのポインタ)
-  \item[戻り値] 成功の場合は0，ファイルオープンに失敗した場合は-1
+  \item[機能] 予約語かどうかを判定する
+  \item[引数] 文字列(char型へのポインタ)
+  \item[戻り値] 文字列が予約語の場合はトークン番号，そうでなければ-1
 \end{description}
 
 \subsubsection{get\_linenum}
 \begin{description}
-  \item[機能] スキャナーを初期化する
-  \item[引数] ファイル名(char型へのポインタ)
-  \item[戻り値] 成功の場合は0，ファイルオープンに失敗した場合は-1
+  \item[機能] 現在の行番号を取得する
+  \item[引数] なし
+  \item[戻り値] 行数(int型)
 \end{description}
 
 \subsubsection{skip\_blank}
 \begin{description}
-  \item[機能] スキャナーを初期化する
-  \item[引数] ファイル名(char型へのポインタ)
-  \item[戻り値] 成功の場合は0，ファイルオープンに失敗した場合は-1
+  \item[機能] スペースやタブなどの空白を読み飛ばす
+  \item[引数] なし
+  \item[戻り値] なし
 \end{description}
 
 \subsubsection{skip\_bracket\_comment}
 \begin{description}
-  \item[機能] スキャナーを初期化する
-  \item[引数] ファイル名(char型へのポインタ)
-  \item[戻り値] 成功の場合は0，ファイルオープンに失敗した場合は-1
+  \item[機能] 波括弧のコメント部分を読み飛ばす
+  \item[引数] なし
+  \item[戻り値] なし
 \end{description}
 
 \subsubsection{skip\_slash\_comment}
 \begin{description}
-  \item[機能] スキャナーを初期化する
-  \item[引数] ファイル名(char型へのポインタ)
-  \item[戻り値] 成功の場合は0，ファイルオープンに失敗した場合は-1
+  \item[機能] バックスラッシュを用いたコメント部分を読み飛ばす
+  \item[引数] なし
+  \item[戻り値] なし
 \end{description}
 
 \subsubsection{error}
 \begin{description}
-  \item[機能] スキャナーを初期化する
-  \item[引数] ファイル名(char型へのポインタ)
-  \item[戻り値] 成功の場合は0，ファイルオープンに失敗した場合は-1
+  \item[機能] エラーメッセージを標準エラー出力に表示する
+  \item[引数] 文字列(char型へのポインタ)
+  \item[戻り値] エラー番号(-1)を返す
 \end{description}
-
 
 \section{テスト情報}
 
 \subsection{テストデータ}
+\subsubsection{ブラックボックステスト}
+ブラックボックステストには用意されていたテストデータを用いた．テストデータを以下に示す．
+\begin{itemize}
+  \item sample11.mpl
+  \item sample011.mpl
+  \item sample11p.mpl
+  \item sample11pp.mpl
+  \item sample12.mpl
+  \item sample012.mpl
+  \item sample12cr.mpl
+  \item sample12crlf.mpl
+  \item sample012eof.mpl
+  \item sample12lf.mpl
+  \item sample12lfcr.mpl
+  \item sample012n.mpl
+  \item sample012neof.mpl
+  \item sample012s.mpl
+  \item sample012seof.mpl
+  \item sample13.mpl
+  \item sample013.mpl
+  \item sample14.mpl
+  \item sample014.mpl
+  \item sample014a.mpl
+  \item sample014b.mpl
+  \item sample14p.mpl
+  \item sample15.mpl
+  \item sample15a.mpl
+  \item sample16.mpl
+  \item sample17.mpl
+  \item sample18.mpl
+  \item sample19p.mpl
+\end{itemize}
+
 \subsection{テスト結果}
 \subsection{テストデータの十分性}
 
