@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIRECTORY="../../mppl"
+DIRECTORY="mppl"
 EXEC_FILE="./tc"
 
 # アルファベット順でファイルを処理
