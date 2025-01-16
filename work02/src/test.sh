@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DIRECTORY="mppl"
-EXEC_FILE="./tc"
+EXEC_FILE="./pp"
 
 # アルファベット順でファイルを処理
 for FILE in $(ls "$DIRECTORY" | sort); do

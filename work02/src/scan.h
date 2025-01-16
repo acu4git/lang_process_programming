@@ -82,11 +82,11 @@ extern void end_scan(void);
 extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
 
-// original
 extern int is_keyword(char *);
 extern int push_char(char);
 extern int pop_char();
 extern void clear_string_attr();
+extern int get_string_attr_len();
 extern void skip_blank(void);
 extern void skip_bracket_comment(void);
 extern void skip_slash_comment(void);

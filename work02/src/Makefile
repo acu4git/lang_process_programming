@@ -1,4 +1,4 @@
-OBJS=main.o scan.o
+OBJS=main.o scan.o pretty_printer.o parser.o
 
 all: pp
 

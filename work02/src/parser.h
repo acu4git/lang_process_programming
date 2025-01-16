@@ -32,10 +32,10 @@ int parse_term();                     // 項
 int parse_factor();                   // 因子
 int parse_constant();                 // 定数
 int parse_multiplicative_operator();  // 乗法演算子
-int parse_madditive_operator();       // 加法演算子
+int parse_additive_operator();        // 加法演算子
 int parse_relational_operator();      // 関係演算子
 int parse_input_statement();          // 入力文
 int parse_output_statement();         // 出力文
-int parse_empty_statement();          // 空文
+int parse_output_format();            // 出力指定
 
 #endif

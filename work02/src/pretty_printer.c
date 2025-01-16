@@ -1,11 +1,13 @@
 #include "pretty_printer.h"
 
+#include "parser.h"
 #include "scan.h"
+#include "token.h"
 
-extern int numtoken[];
 int token;
 
 void pretty_print() {
-  while ((token = scan()) >= 0) {
-  }
+  token = scan();
+  parse_program();
+  printf("token = %d\n", token);
 }
