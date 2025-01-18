@@ -20,8 +20,6 @@ char *tokenstr[NUMOFTOKEN + 1] = {
     "break"};
 
 int main(int nc, char *np[]) {
-  int token, i;
-
   if (nc < 2) {
     error("File name is not given.");
     return 0;

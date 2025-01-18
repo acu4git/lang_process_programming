@@ -260,6 +260,7 @@ int pop_char() {
 
   res = string_attr[len - 1];
   string_attr[len - 1] = '\0';
+  string_attr_len--;
   return res;
 }
 
@@ -267,6 +268,7 @@ void clear_string_attr() {
   for (int i = 0; i < MAXSTRSIZE; i++) {
     string_attr[i] = '\0';
   }
+  string_attr_len = 0;
 }
 
 int get_string_attr_len() { return string_attr_len; }

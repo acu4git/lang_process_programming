@@ -80,7 +80,7 @@ int parse_array_type() {
   token = scan();
   if (token != TLSQPAREN) return error("Left square bracket('[') is not found");
   token = scan();
-  if (token != TINTEGER) return error("Integer is not found");
+  if (token != TNUMBER) return error("Unsigned integer is not found");
   token = scan();
   if (token != TRSQPAREN) return error("Right square bracket(']') is not found");
   token = scan();
@@ -275,7 +275,7 @@ int parse_term() {
 int parse_factor() {
   if (token == TNAME && parse_variable() == ERROR)
     return ERROR;
-  else if ((token == TINTEGER || token == TFALSE || token == TTRUE || token == TSTRING) && parse_constant() == ERROR)
+  else if ((token == TNUMBER || token == TFALSE || token == TTRUE || token == TSTRING) && parse_constant() == ERROR)
     return ERROR;
   else if (token == TLPAREN) {
     token = scan();
@@ -297,7 +297,7 @@ int parse_factor() {
 }
 
 int parse_constant() {
-  if (token != TINTEGER && token != TFALSE && token != TTRUE && token != TSTRING) return error("Constant is not found");
+  if (token != TNUMBER && token != TFALSE && token != TTRUE && token != TSTRING) return error("Constant is not found");
   token = scan();
   return NORMAL;
 }
@@ -356,12 +356,11 @@ int parse_output_format() {
   if (token == TSTRING && get_string_attr_len() != 1) {
     token = scan();
     if (token == TCOLON) return error("The string before the colon (:) must be a single character");
-    token = scan();
   } else {
     if (parse_expression() == ERROR) return ERROR;
     if (token == TCOLON) {
       token = scan();
-      if (token != TINTEGER) return error("Integer is not found");
+      if (token != TNUMBER) return error("Integer is not found");
       token = scan();
     }
   }

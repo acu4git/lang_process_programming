@@ -1,4 +1,5 @@
 OBJS=main.o scan.o pretty_printer.o parser.o
+CFLAGS = -g -Wall
 
 all: pp
 
