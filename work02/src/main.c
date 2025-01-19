@@ -64,6 +64,6 @@ int main(int nc, char *np[]) {
 }
 
 int error(char *mes) {
-  fprintf(stderr, "Line: %4d ERROR: %s\n", get_linenum(), mes);
+  fprintf(stderr, "\nLine: %4d ERROR: %s\n", get_linenum(), mes);
   return S_ERROR;
 }
