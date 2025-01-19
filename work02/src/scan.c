@@ -3,20 +3,17 @@
 static FILE* fp;
 static int cbuf;
 static char errmsg[MAXSTRSIZE] = "";
-static int linenum;
-static int token_linenum;
+static int linenum = 1;
+static int token_linenum = 0;
 
-int num_attr;
+int num_attr = -1;
 char string_attr[MAXSTRSIZE] = "";
 char string_attr_buff[MAXSTRSIZE] = "";
-int string_attr_len;
+int string_attr_len = 0;
 
 int init_scan(char* filename) {
   if ((fp = fopen(filename, "r")) == NULL) return S_ERROR;
   cbuf = fgetc(fp);
-  token_linenum = linenum = 0;
-  num_attr = -1;
-  string_attr_len = 0;
   return 0;
 }
 
