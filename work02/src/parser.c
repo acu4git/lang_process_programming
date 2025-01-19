@@ -5,6 +5,7 @@
 #include "token.h"
 
 extern int token;
+int iter_flag = 0;
 
 int parse_program() {
   if (token != TPROGRAM) return error(ERRMSG_PROGRAM_NOT_FOUND);
@@ -178,6 +179,7 @@ int parse_condition_statement() {
 
 int parse_iteration_statement() {
   if (token != TWHILE) return error(ERRMSG_WHILE_NOT_FOUND);
+  iter_flag = 1;
   token = scan();
   if (parse_expression() == ERROR) return ERROR;
   if (token != TDO) return error(ERRMSG_DO_NOT_FOUND);
@@ -188,6 +190,8 @@ int parse_iteration_statement() {
 
 int parse_exit_statement() {
   if (token != TBREAK) return error(ERRMSG_BREAK_NOT_FOUND);
+  if (!iter_flag) return error("Keyword 'break' should be found in iteration statement");
+  iter_flag = 0;
   token = scan();
   return NORMAL;
 }
