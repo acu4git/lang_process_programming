@@ -3,7 +3,35 @@
 
 /* keyword list */
 struct KEY key[KEYWORDSIZE] = {
-    {"and", TAND}, {"array", TARRAY}, {"begin", TBEGIN}, {"boolean", TBOOLEAN}, {"break", TBREAK}, {"call", TCALL}, {"char", TCHAR}, {"div", TDIV}, {"do", TDO}, {"else", TELSE}, {"end", TEND}, {"false", TFALSE}, {"if", TIF}, {"integer", TINTEGER}, {"not", TNOT}, {"of", TOF}, {"or", TOR}, {"procedure", TPROCEDURE}, {"program", TPROGRAM}, {"read", TREAD}, {"readln", TREADLN}, {"return", TRETURN}, {"then", TTHEN}, {"true", TTRUE}, {"var", TVAR}, {"while", TWHILE}, {"write", TWRITE}, {"writeln", TWRITELN}};
+    {"and", TAND},
+    {"array", TARRAY},
+    {"begin", TBEGIN},
+    {"boolean", TBOOLEAN},
+    {"break", TBREAK},
+    {"call", TCALL},
+    {"char", TCHAR},
+    {"div", TDIV},
+    {"do", TDO},
+    {"else", TELSE},
+    {"end", TEND},
+    {"false", TFALSE},
+    {"if", TIF},
+    {"integer", TINTEGER},
+    {"not", TNOT},
+    {"of", TOF},
+    {"or", TOR},
+    {"procedure", TPROCEDURE},
+    {"program", TPROGRAM},
+    {"read", TREAD},
+    {"readln", TREADLN},
+    {"return", TRETURN},
+    {"then", TTHEN},
+    {"true", TTRUE},
+    {"var", TVAR},
+    {"while", TWHILE},
+    {"write", TWRITE},
+    {"writeln", TWRITELN},
+};
 
 /* Token counter */
 int numtoken[NUMOFTOKEN + 1];
