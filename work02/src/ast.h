@@ -4,6 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef enum {
+  NODE_PROGRAM,
+  NODE_BROCK,
+  NODE_VARIABLE_DECL,
+  NODE_VARIABLE_NAMES,
+  NODE_VARIABLE_NAME,
+  NODE_TYPE,
+} NodeKind;
+
 typedef struct _ASTNode {
   char *type;
   char *value;
