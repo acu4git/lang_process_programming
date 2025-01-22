@@ -4,6 +4,7 @@
 #define NORMAL 0
 #define ERROR -1
 
+int parse();
 int parse_program();                  // プログラム
 int parse_block();                    // ブロック
 int parse_variable_declaration();     // 変数宣言部
@@ -37,5 +38,6 @@ int parse_relational_operator();      // 関係演算子
 int parse_input_statement();          // 入力文
 int parse_output_statement();         // 出力文
 int parse_output_format();            // 出力指定
+int parse_empty_statement();          // 空文
 
 #endif
