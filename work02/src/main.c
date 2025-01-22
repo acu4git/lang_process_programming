@@ -1,4 +1,4 @@
-﻿#include "pretty_printer.h"
+﻿#include "parser.h"
 #include "scan.h"
 
 /* keyword list */
@@ -58,12 +58,12 @@ int main(int nc, char *np[]) {
     return 0;
   }
 
-  pretty_print();
+  parse();
 
   return 0;
 }
 
 int error(char *mes) {
-  fprintf(stderr, "\nLine: %4d ERROR: %s\n", get_linenum(), mes);
+  fprintf(stderr, "Line: %4d ERROR: %s\n", get_linenum(), mes);
   return S_ERROR;
 }
