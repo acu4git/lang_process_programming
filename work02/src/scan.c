@@ -90,8 +90,8 @@ int scan() {
         cbuf = fgetc(fp);
       } while (isdigit(cbuf));
       num_attr = atoi(string_attr);
-      if (num_attr > 32768) return error("number must not be larger than 32768");
       token_linenum = linenum;
+      if (num_attr > 32768) return error("number must not be larger than 32768");
       return TNUMBER;
     } else {
       switch (cbuf) {
@@ -171,7 +171,6 @@ int scan() {
               token_linenum = linenum;
               return TLEEQ;
             default:
-              ungetc(cbuf, fp);
               token_linenum = linenum;
               return TLE;
           }
