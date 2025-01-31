@@ -1,6 +1,0 @@
-program constTest;
-var i : integer;
-begin
-      while i <10 do begin
-      i := i + 1; end;
-end.

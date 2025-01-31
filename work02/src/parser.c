@@ -2,7 +2,6 @@
 
 #include "parse_error.h"
 #include "scan.h"
-#include "token.h"
 
 extern char* tokenstr[];
 int token;

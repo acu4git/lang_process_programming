@@ -40,7 +40,84 @@
 
 \subsection{全体構成}
 
+全体構成を図\ref{fig:module_graph}に示す．
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{assets/module_02.png}
+  \caption{課題2のモジュール構成図}
+  \label{fig:module_graph}
+\end{figure}
+
 \subsection{各モジュールごとの構成}
+
+\subsubsection{main.c}
+init\_scan関数とend\_scan関数でファイルの開閉を行い，parse関数で構文解析とプリティプリントを行う．
+
+\subsubsection{parser.c}
+scan関数でトークンを取得してLL(1)構文木を作成して利用するのが短期間では困難だったため，結局断念して構文解析とプリティプリントを同時に行うようにした．
+
+\subsubsection{scan.c}
+字句解析を行い，得た文字列や数値はstring\_attrとnum\_attrに格納しておく．
+
+\subsection{実装における外部仕様}
+parse.cについてのみ触れる．
+
+まず，変数を以下に示す．
+
+\subsubsection{indent\_level}
+\begin{description}
+  \item[説明] インデントの深さを記憶する変数．0から始まる．
+\end{description}
+
+\subsubsection{br\_flag}
+\begin{description}
+  \item[説明] 改行が発生したかを記憶する変数．発生した場合は1，しない場合は0．pretty\_print関数が呼ばれると内部でフラグが0に設定される．
+\end{description}
+
+\subsubsection{iter\_flag}
+\begin{description}
+  \item[説明] 繰り返し文がどれだけの深さ発生しているかを記憶する変数．繰り返し文に入る度にインクリメントされ，breakで抜けるとデクリメントされる．
+\end{description}
+
+\subsubsection{formal\_arg\_flag}
+\begin{description}
+  \item[説明] 仮引数内を解析中かどうかを記憶する変数．1なら仮引数内，0なら仮引数外．
+\end{description}
+
+\subsubsection{empty\_stmt\_flag}
+\begin{description}
+  \item[説明] 空文があるかどうかを記憶する変数．1なら空文で，0なら空文でない．
+\end{description}
+
+次に関数について以下に示す．
+
+\subsubsection{newline}
+\begin{description}
+  \item[機能] 改行を行い，br\_flagを1にする
+  \item[引数] なし
+  \item[戻り値] なし
+\end{description}
+
+\subsubsection{pretty\_print}
+\begin{description}
+  \item[機能] 各トークンについて適切なプリティプリントを行う
+  \item[引数] なし
+  \item[戻り値] なし
+\end{description}
+
+\subsubsection{parse}
+\begin{description}
+  \item[機能] 構文解析を開始し，プリティプリントも行う
+  \item[引数] なし
+  \item[戻り値] 構文解析に成功したら0，失敗したら-1
+\end{description}
+
+\subsubsection{parse\_○○}
+\begin{description}
+  \item[機能] 生成規則に対応した構文解析を再帰的に行う．また，都度プリティプリントを行う．
+  \item[引数] なし
+  \item[戻り値] 構文解析に成功したら0，失敗したら-1
+\end{description}
 
 \section{テスト情報}
 
@@ -76,6 +153,27 @@
   \item sample17.mpl
   \item sample18.mpl
   \item sample19p.mpl
+  \item sample2a.mpl
+  \item sample02a.mpl
+  \item sample21.mpl
+  \item sample021.mpl
+  \item sample22.mpl
+  \item sample022.mpl
+  \item sample23.mpl
+  \item sample023.mpl
+  \item sample24.mpl
+  \item sample024.mpl
+  \item sample24a.mpl
+  \item sample25.mpl
+  \item sample025.mpl
+  \item sample025a.mpl
+  \item sample25t.mpl
+  \item sample26.mpl
+  \item sample026.mpl
+  \item sample26a.mpl
+  \item sample27.mpl
+  \item sample28p.mpl
+  \item sample29p.mpl
 \end{itemize}
 
 \subsubsection{ホワイトボックステスト}
@@ -92,7 +190,7 @@ docker環境でのブラックボックステストの結果を図\ref{fig:black
 \end{figure}
 
 \subsection{ホワイトボックステスト}
-ホワイトボックステストの結果を図\ref{fig:white_box_test}に示す．
+ホワイトボックステストの結果（主に実装を行ったparser.cについて）を図\ref{fig:white_box_test}に示す．
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{assets/white_box_test.png}
@@ -101,42 +199,44 @@ docker環境でのブラックボックステストの結果を図\ref{fig:black
 \end{figure}
 
 \subsection{テストデータの十分性}
-ブラックボックステストでは，構文に関するテストや境界値のテストが含まれている．それらのテストが通ったことから，
-外部仕様に関しては大きな問題は見られないと言える．
-
-また，ホワイトボックステストでは未実装の拡張仕様については網羅率は$0\%$となっているが，字句解析を行うscan.cの命令網羅率は$91.95\%$と高い結果であった．
+ブラックボックステストでは生成規則についてのテストがほぼ全て含まれており，それらがパスしたことによりある程度の仕様を満たしていると考えられる．
+また，ホワイトボックステストでは命令網羅率が$98.47\%$と高い数値を叩きだしており，コードの漏れが少ないと考えられる．
 
 \section{課題のスケジュールと実際の進捗状況}
 \subsection{事前計画}
-\begin{figure}[H]
+\begin{table}[H]
   \centering
-  \includegraphics[width=\textwidth]{assets/schedule_01.png}
-  \caption{課題1の事前のスケジュール}
-  \label{fig:schedule01_pre}
-\end{figure}
+  \caption{課題2の事前計画}
+  \begin{tabular}{cccp{7cm}}
+    \hline
+    開始日 & 終了日 & 予定工数(h) & 作業内容                                 \\ \hline
+    1/7    & 1/9    & 4           & 資料を読んで仕様をまとめ，概略設計を行う \\
+    1/8    & 1/12   & 10          & プログラムの作成                         \\
+    1/8    & 1/12   & 4           & テスト工程                               \\
+    1/10   & 1/12   & 4           & レポート作成                             \\
+    \hline
+  \end{tabular}
+\end{table}
 
 \subsection{実際の進捗状況}
 \begin{table}[H]
   \centering
-  \caption{課題1の実際の進捗}
-  \scalebox{0.6}{
-    \begin{tabular}{cccc}
-      \hline
-      開始日 & 終了日 & 取り組み時間 & 作業内容                                                                                                       \\ \hline
-      10/3   & 10/16  & 3            & 資料を読んで仕様をまとめ，概略設計を行う                                                                       \\
-      10/16  & 10/26  & 3            & トークンカウント用の配列初期化とスキャナを用いたトークンカウント部の作成，またカウントした結果の出力部分の完成 \\
-      10/26  & 12/16  & 8            & スキャナの作成                                                                                                 \\
-      10/26  & 12/16  & 2            & テスト工程                                                                                                     \\
-      12/16  & 1/8    & 6            & レポート作成                                                                                                   \\
-      \hline
-    \end{tabular}
-  }
+  \caption{課題2の事前計画}
+  \begin{tabular}{cccp{7cm}}
+    \hline
+    開始日 & 終了日 & 工数(h) & 作業内容                                 \\ \hline
+    1/7    & 1/9    & 4       & 資料を読んで仕様をまとめ，概略設計を行う \\
+    1/8    & 1/23   & 20      & プログラムの作成                         \\
+    1/8    & 1/23   & 5       & テスト工程                               \\
+    1/18   & 1/23   & 3       & レポート作成                             \\
+    \hline
+  \end{tabular}
 \end{table}
 
 \subsection{当初の事前計画と実際の進捗との差の原因}
-10月中に課題1を終わらせる予定であったが，同時並行して進めていたハッカソンや就活に重きをおいてしまい，本課題に支障が出てしまった．
-その後も中途半端にスケジュールを詰めたことにより，課題の進捗を生めなかった．課題1の難易度を甘く見積もっており，優先順位を後回しにしたことにより
-本課題の進捗の遅延や，他実験のレポートや就活との渋滞に繋がってしまった．これらは，適切にスケジュールを組み，日ごろからチェックすることで
-遅延は回避できた可能性がある．
+課題1がかなり遅れたため，課題2にも響いてしまい，本来の締め切りを超過している．
+また，今回の課題に関して予定よりも工数がかかってしまった原因は，構文解析の結果から抽象構文木を作成して
+プリティプリントを行おうとし，その実装と調査に時間がかかってしまったことが大きい．MPPLの生成規則から
+構文木を作成して利用するのが短期間では困難だったため，結局断念して構文解析とプリティプリントを同時に行うようにした．
 
 \end{document}
