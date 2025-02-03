@@ -77,6 +77,8 @@ extern int error(char *mes);
 extern int init_scan(char *filename);
 extern int scan(void);
 extern int get_linenum(void);
+extern char *get_string(void);
+extern int get_num(void);
 extern void end_scan(void);
 
 extern int num_attr;

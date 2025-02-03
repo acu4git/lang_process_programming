@@ -278,6 +278,10 @@ int is_keyword(char* str) {
 
 int get_linenum() { return token_linenum; }
 
+char* get_string() { return string_attr; }
+
+int get_num() { return num_attr; }
+
 void skip_blank() {
   while (cbuf != EOF && (cbuf == ' ' || cbuf == '\t')) cbuf = fgetc(fp);
 }
