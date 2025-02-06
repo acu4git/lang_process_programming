@@ -278,7 +278,15 @@ int is_keyword(char* str) {
 
 int get_linenum() { return token_linenum; }
 
-char* get_string() { return string_attr; }
+char* get_string() {
+  char* cp;
+  if ((cp = (char*)malloc(sizeof(char) * (get_string_attr_len()))) == NULL) {
+    error("Failed to allocate memory at get_string()");
+    return NULL;
+  }
+  strcpy(cp, string_attr);
+  return cp;
+}
 
 int get_num() { return num_attr; }
 

@@ -1,4 +1,4 @@
-OBJS=main.o scan.o parser.o
+OBJS=main.o scan.o parser.o cross_referencer.o
 CFLAGS = -g -Wall
 
 all: cr

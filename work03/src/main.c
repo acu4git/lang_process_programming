@@ -1,4 +1,5 @@
-﻿#include "parser.h"
+﻿#include "cross_referencer.h"
+#include "parser.h"
 #include "scan.h"
 
 /* keyword list */
@@ -58,7 +59,19 @@ int main(int nc, char *np[]) {
     return 0;
   }
 
+  init_tab();
+
+  // if (parse() == ERROR) {
+  //   return 1;
+  // }
   parse();
+  end_scan();
+
+  add_cr_table(IS_GLOBAL);
+  print_tab();
+
+  clear_table(IS_GLOBAL);
+  clear_table(IS_CROSS);
 
   return 0;
 }

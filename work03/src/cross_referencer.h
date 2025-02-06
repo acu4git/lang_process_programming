@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define NORMAL 0
+#define ERROR -1
+
 #define TPINT 0
 #define TPCHAR 1
 #define TPBOOL 2
@@ -13,8 +16,18 @@
 #define TPARRAYBOOL 5
 #define TPPROC 6
 
-#define IS_GLOBAL 0
-#define IS_LOCAL 1
+#define IS_LOCAL 0
+#define IS_GLOBAL 1
+#define IS_CROSS 2
+
+#define MAX_NAMELIST_SIZE 16
+
+#define TAB_SIZE_NAME 20
+#define TAB_SIZE_TYPE 30
+#define TAB_SIZE_DEFINE 6
+#define TAB_SIZE_REFERENCES 10
+
+extern int error(char *mes);
 
 struct TYPE {
   int ttype;           /* TPINT TPCHAR TPBOOL TPARRAYINT TPARRAYCHAR TPARRAYBOOL TPPROC*/
@@ -38,8 +51,18 @@ struct ID {
   struct ID *nextp;
 }; /* Pointers to root of global & local symbol tables */
 
-void init_idtab();
-int register_id(struct ID *);
-void print_idtab();
+void init_tab();
+struct ID *new_id(char *name, char *procname, int ispara, int deflinenum);
+struct TYPE *new_type(int ttype, int arraysize, struct TYPE *etp, struct TYPE *paratp);
+void push(struct ID **head, struct ID *id);
+int register_bulk(struct ID *);
+int is_valid_param();
+void assign_type(struct ID *idlist, struct TYPE *);
+struct TYPE *assign_parameter(struct TYPE *);
+void add_refline(struct ID *, int);
+struct ID *get_declared_id(char *);
+void add_cr_table(int);
+void clear_table(int);
+void print_tab();
 
 #endif

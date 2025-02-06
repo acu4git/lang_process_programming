@@ -5,21 +5,8 @@
 \usepackage{float}
 \usepackage{graphicx}
 \usepackage{listings}
-
-\lstset{
-    language=C, % 使用するプログラム言語を指定
-    basicstyle=\ttfamily\footnotesize, % フォントの指定
-    numbers=left, % 行番号を表示（必要な場合）
-    numberstyle=\tiny, % 行番号のスタイル
-    frame=single, % ソースコードを枠で囲む（必要な場合）
-    breaklines=true, % 長い行を自動的に折り返す
-    captionpos=b, % キャプションの位置を下にする
-    showstringspaces=false, % 文字列内のスペースを表示しない
-    keywordstyle=\color{blue}, % キーワードの色
-    commentstyle=\color{green}, % コメントの色
-    stringstyle=\color{red}, % 文字列の色
-}
-\renewcommand{\lstlistingname}{ソースコード}
+\usepackage{xcolor}
+\usepackage{caption}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -27,7 +14,7 @@
 
 \renewcommand\thesubsection{(\alph{subsection})}
 
-\title{言語処理プログラミング 課題2}
+\title{言語処理プログラミング 課題3}
 \author{22122502 川口 栄宗}
 \date{提出日: \today}
 
@@ -43,7 +30,7 @@
 全体構成を図\ref{fig:module_graph}に示す．
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{}
+  \includegraphics[width=\textwidth]{assets/lpp03_module.png}
   \caption{課題3のモジュール構成図}
   \label{fig:module_graph}
 \end{figure}
@@ -51,16 +38,184 @@
 \subsection{各モジュールごとの構成}
 
 \subsubsection{main.c}
-init\_scan関数とend\_scan関数でファイルの開閉を行い，parse関数で構文解析とプリティプリントを行う．
-
-\subsubsection{parser.c}
-scan関数でトークンを取得してLL(1)構文木を作成して利用するのが短期間では困難だったため，結局断念して構文解析とプリティプリントを同時に行うようにした．
+変数については課題1と同じである．モジュールの流れとしては，
+init\_scan関数でファイルを開き，init\_tab関数でクロスリファレンス表に関するテーブルの初期化を行い，
+parse関数で構文解析系を呼び出す．そして，end\_scan関数でファイルを閉じ，add\_cr\_table関数を引数にIS\_GLOBALを入れてグローバル変数に関する
+表をクロスリファレンサに追加，print\_tab関数でクロスリファレンス表を標準出力する．最後にclear\_table関数でグローバル変数用のテーブルとクロスリファレンサのテーブルを閉じる．
+ここで登場したIS\_GLOBALやIS\_CROSSはcross\_referencer.hに記載されているマクロである．
 
 \subsubsection{scan.c}
-字句解析を行い，得た文字列や数値はstring\_attrとnum\_attrに格納しておく．
+字句解析系のモジュールである．課題2のレポートでは触れていない，追加した変数を表\ref{tab:scan_design}に示す．
+\begin{table}[H]
+  \centering
+  \caption{scan.cに追加した変数}
+  \begin{tabular}{|l|p{10cm}|}
+    \hline
+    変数              & 意味                                                                                               \\ \hline
+    token\_linenum    & 最後に字句を返した時の行番号．linenumだけでは行番号を追うのが難しいため追加．                      \\
+    string\_attr\_len & string型の字句を返した時にstring\_attr配列に格納されている文字列の長さ．構文解析で必要なため追加． \\ \hline
+  \end{tabular}
+  \label{tab:scan_design}
+\end{table}
+
+\subsubsection{parser.c}
+課題2で実装した構文解析を行い，制約についても解析を行う．
+また，構文解析しながらクロスリファレンサのモジュールを呼び出して表を作成する．
+表\ref{tab:parser_design}に課題3で追加した各変数とその意味について触れる．
+
+\begin{table}[H]
+  \centering
+  \caption{parser.cの各変数とその意味}
+  \begin{tabular}{|l|p{10cm}|}
+    \hline
+    変数        & 意味                                                                                                \\ \hline
+    name        & 変数や手続き名を指すポインタ                                                                        \\
+    procname    & 手続き名を指し，手続きの複合文を解析するときに用いる．                                              \\
+    deflinenum  & 変数や手続きが定義されたときの行番号を保持する．                                                    \\
+    ttype       & 変数の型を記憶する．                                                                                \\
+    arrsize     & 配列が定義された時の配列の長さを記憶する．                                                          \\
+    array\_flag & 配列の変数を解析中かどうかを表すフラグ変数．                                                        \\
+    id          & 解析を行っている変数の情報をまとめて記憶するための構造体ポインタ．                                  \\
+    procid      & 解析を行っている手続き名の情報を記憶する構造体ポインタ．                                            \\
+    tp          & 解析を行っている変数の型をstruct TYPE *型を用いて保存するためのポインタ．後ほど，id変数に追加する． \\
+    proctp      & 手続きの扱う型の情報を格納するための変数．                                                          \\
+    etp         & 配列型の場合の要素の型を記憶する．                                                                  \\
+    var         & クロスリファレンス表から取り出した変数を保持する．                                                  \\ \hline
+  \end{tabular}
+  \label{tab:parser_design}
+\end{table}
+
+\subsubsection{cross\_referencer.c}
+クロスリファレンス表の作成や操作に関する関数がまとまっている．
+具体的には，テーブルの初期化，struct ID *型やstruct TYPE *型のコンストラクタ，
+クロスリファレンス表の検索・登録・削除，などの機能がある．
+
+以下に各変数名と変数の意味をまとめた表\ref{tab:cross_referencer_design}を示す．
+\begin{table}[H]
+  \centering
+  \caption{cross\_referencerの変数と意味}
+  \begin{tabular}{|l|p{10cm}|}
+    \hline
+    変数        & 意味                                                 \\ \hline
+    global\_tab & グローバル変数や手続き名の情報を持つテーブル         \\
+    local\_tab  & 手続き内で定義された仮引数や変数の情報を持つテーブル \\
+    cr\_tab     & クロスリファレンスの結果をまとめたテーブル           \\ \hline
+  \end{tabular}
+  \label{tab:cross_referencer_design}
+\end{table}
+
+\subsection{各関数の外部仕様}
+
+\subsubsection{scan.c}
+scan.cの関数の外部仕様を表\ref{tab:scan_func}に示す．
+
+\begin{table}[H]
+  \centering
+  \caption{scan.cの関数の外部仕様}
+  \begin{tabular}{|l|p{6cm}|l|p{3cm}|}
+    \hline
+    関数名                 & 機能                                     & 引数 & 戻り値              \\ \hline
+    init\_scan             & 課題1から変更なし                        & ~    & ~                   \\
+    end\_scan              & 課題1から変更なし                        & ~    & ~                   \\
+    scan                   & 課題1から変更なし                        & ~    & ~                   \\
+    push\_char             & 課題1から変更なし                        & ~    & ~                   \\
+    pop\_char              & 課題1から変更なし                        & ~    & ~                   \\
+    clear\_string\_attr    & 課題1から変更なし                        & ~    & ~                   \\
+    is\_keyword            & 課題1から変更なし                        & ~    & ~                   \\
+    skip\_blank            & 課題1から変更なし                        & ~    & ~                   \\
+    skip\_bracket\_comment & 課題1から変更なし                        & ~    & ~                   \\
+    skip\_slash\_comment   & 課題1から変更なし                        & ~    & ~                   \\
+    get\_string\_attr\_len & 最後に解析した文字列字句の長さを取得する & なし & 文字列の長さ(int型) \\
+    get\_linenum           & 最後に解析した字句の行番号を取得する     & なし & 行番号(int型)       \\
+    get\_string            & string\_attrの文字列のコピーを取得する   & なし & char型へのポインタ  \\
+    get\_num               & 字句解析した数値を取得する               & なし & int型               \\ \hline
+  \end{tabular}
+  \label{tab:scan_func}
+\end{table}
+
+\subsubsection{parser.c}
+parser.cの関数の外部仕様を表\ref{tab:parser_func}に示す．
+
+\begin{table}[H]
+  \centering
+  \caption{parser.cの関数の外部仕様}
+  \scalebox{0.5}{
+    \begin{tabular}{|l|p{15cm}|l|p{6cm}|}
+      \hline
+      関数名                          & 機能                                                                                                                                                                                                                                                           & 引数 & 戻り値                             \\ \hline
+      newline                         & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      pretty\_print                   & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      reset\_ptr                      & 大域変数id,etp,procid,proctp, tpをそれぞれNULL値にリセットする                                                                                                                                                                                                 & なし & なし                               \\
+      parse                           & 対象ソースコードの構文解析を頭から行うための関数                                                                                                                                                                                                               & なし & 成功は0，エラーは-1                \\
+      parse\_program                  & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      parse\_block                    & ブロック解析を行う．副プログラム宣言を解析したときは，procnameをNULLにし，local\_tabをクロスリファレンス表に追加して元を削除する．また，reset\_ptr関数で諸々のポインタをNULLにリセットする．                                                                   & なし & 成功は0，エラーは-1                \\
+      parse\_variable\_declaration    & 変数宣言部の解析を行う．変数の並びと型の情報をそれぞれ取得し，クロスリファレンサ用のテーブルに登録する．                                                                                                                                                       & なし & 成功は0，エラーは-1                \\
+      parse\_variable\_names          & 変数名の並びを解析する．1つ1つの変数をテーブルに追加していく．                                                                                                                                                                                                 & なし & 成功は0，エラーは-1                \\
+      parse\_variable\_name           & 変数名を解析する．変数名の文字列を大域変数nameに割り当て，行番号も大域変数deflinenumに割り当てる．                                                                                                                                                             & なし & 成功は0，エラーは-1                \\
+      parse\_type                     & 型を解析し，型情報を作成して大域変数tpに割り当てる．                                                                                                                                                                                                           & なし & 成功は0，エラーは-1                \\
+      parse\_standard\_type           & 標準型を解析する．array\_flagによって，配列の型なのか，普通の標準型なのかを場合分けし，得られた結果を戻り値として返す．                                                                                                                                        & なし & 成功は型番号，エラーは-1           \\
+      parse\_array\_type              & 配列型を解析する．array\_flagを1にした上で解析を行い，parse\_standard\_type関数でどの配列の型なのかを取得し，戻り値として返す．                                                                                                                                & なし & 成功は配列の型番号，エラーは-1     \\
+      parse\_subprogram\_declaration  & 副プログラム宣言を解析する．ttypeをTPROCとし，procidとproctpを用いて手続きに関する情報のテーブルへの追加と型情報の割り当てを行う．                                                                                                                             & なし & 成功は0，エラーは-1                \\
+      parse\_procedure\_name          & 手続き名を解析する．手続き名の文字列をnameに割り当て，定義行をdeflinenumに割り当てる．                                                                                                                                                                         & なし & 成功は0，エラーは-1                \\
+      parse\_formal\_parameters       & 仮引数を解析する．formal\_arg\_flagを1にし，変数の並びと型情報を取得してidをlocal\_tabに追加する．解析が終わったらformal\_arg\_flagを0に戻す．                                                                                                                 & なし & 成功は0，エラーは-1                \\
+      parse\_compound\_statement      & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      parse\_statement                & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      parse\_condition\_statement     & 条件分岐を解析する．条件式の型がboolean型を満たしているかを確認している．                                                                                                                                                                                      & なし & 成功は0，エラーは-1                \\
+      parse\_iteration\_statement     & 繰り返し文を解析する．繰り返しの条件式の型がboolean型を満たしているかを確認している．                                                                                                                                                                          & なし & 成功は0，エラーは-1                \\
+      parse\_exit\_statement          & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      parse\_call\_statement          & 手続き呼び出し文を解析する．手続き名をprocname\_tmpが取得し，それをもとに既存のテーブルに検索をかけてポインタ変数varに渡す．既に定義されていたら参照行を追加し，未定義の場合はエラーとする．                                                                   & なし & 成功は0，エラーは-1                \\
+      parse\_expressions              & 式の並びを解析する．手続きの仮引数に相当するため，手続きの情報をもつvarを基に正しく型が設定されているかを確認していく．                                                                                                                                        & なし & 成功は0，エラーは-1                \\
+      parse\_return\_statement        & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      parse\_assignment\_statement    & 代入文の解析を行う．左辺部と式の型を比較して，型が等しいかつ標準型かどうかを判定する．また，型が違う場合でも適切な型であるか確認する．                                                                                                                         & なし & 成功は0，エラーは-1                \\
+      parse\_left\_part               & 左辺部の解析を行う．変数を解析して得た型を戻り値として返す．                                                                                                                                                                                                   & なし & 成功は型番号，エラーは-1           \\
+      parse\_variable                 & 変数の解析を行う．変数名の文字列でテーブルに検索をかけ，結果をvarに格納する．定義されている変数を参照した場合は，varに参照行を追加する．また，配列の要素であった場合は，添え字が符号なし整数であるかどうかを確認し，問題がなければ変数の型を戻り値として返す． & なし & 成功は型番号，エラーは-1           \\
+      parse\_expression               & 式の解析を行う．単純式1つの場合はその型を，関係演算子で繋がれた場合は2つの型が同じかどうかを判定する．                                                                                                                                                         & なし & 成功は型番号，エラーは-1           \\
+      parse\_simple\_expression       & 単純式を解析する．符号があればその後に符号なし整数が続くかどうかを判定し，単項1つである場合はその型を返し，和差の場合は2つの型が適切なものかどうかを判定してから型を返す．                                                                                     & なし & 成功は型番号，エラーは-1           \\
+      parse\_term                     & 単項を解析する．因子1つであればその型を返し，積で繋がれた場合は2つの型が正しいか判定して結果を返す．                                                                                                                                                           & なし & 成功は型番号，エラーは-1           \\
+      parse\_factor                   & 因子を解析する．条件分岐でどの因子かを選び，得られた型を返す．                                                                                                                                                                                                 & なし & 成功は型番号，エラーは-1           \\
+      parse\_constant                 & 定数を解析する．符号なし整数か論理値かchar型かを判定して，その結果を返す．stringトークンの長さが1でない場合は定数として扱えないためエラーとする．                                                                                                              & なし & 成功は型番号，エラーは-1           \\
+      parse\_multiplicative\_operator & 乗法演算子を解析する．字句が乗法演算子の種類を表しているため，それを戻り値として返す．                                                                                                                                                                         & なし & 成功は乗法演算子の字句，エラーは-1 \\
+      parse\_additive\_operator       & 加法演算子を解析する．字句が加法演算子の種類を表しているため，それを戻り値として返す．                                                                                                                                                                         & なし & 成功は加法演算子の字句，エラーは-1 \\
+      parse\_relational\_operator     & 関係演算子を解析する．字句が関係演算子の種類を表しているため，それを戻り値として返す．                                                                                                                                                                         & なし & 成功は関係演算子の字句，エラーは-1 \\
+      parse\_input\_statement         & 入力文を解析する．括弧内の変数の型を取得し，符号なし整数かchar型かを判定している．                                                                                                                                                                             & なし & 成功は0，エラーは-1                \\
+      parse\_output\_statement        & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\
+      parse\_output\_format           & 出力指定を解析する．出力指定が式であったときに型を取得して，標準型であるかどうかを確認している．                                                                                                                                                               & なし & 成功は0，エラーは-1                \\
+      parse\_empty\_statement         & 課題2から変更なし                                                                                                                                                                                                                                              & ~    & ~                                  \\ \hline
+    \end{tabular}
+  }
+  \label{tab:parser_func}
+\end{table}
+
+\subsubsection{cross\_referencer.c}
+cross\_referencer.cの関数の外部仕様を表\ref{tab:cross_referencer_func}に示す．
+
+\begin{table}[H]
+  \centering
+  \caption{cross\_referencer.cの関数の外部仕様}
+  \scalebox{0.7}{\begin{tabular}{|l|p{6cm}|p{7cm}|p{4cm}|}
+      \hline
+      関数名            & 機能                                                                                             & 引数                                   & 戻り値                        \\ \hline
+      init\_tab         & 大域名用のテーブル，副プログラム宣言内用のテーブル，クロスリファレンス表のテーブルを初期化する． & なし                                   & なし                          \\
+      new\_id           & 変数や手続き名のIDのインスタンスを作成する．                                                     & char *, char *, int, int               & struct ID *型のインスタンス   \\
+      new\_type         & 型情報のインスタンスを作成する．                                                                 & int, int, struct TYPE *, struct TYPE * & struct TYPE *型のインスタンス \\
+      search\_global    & 大域名用の記号表から指定したIDを検索する．                                                       & struct ID *                            & struct ID *                   \\
+      search\_local     & 局所名用の記号表から指定したIDを検索する．                                                       & struct ID *                            & struct ID *                   \\
+      register\_bulk    & 記号表をまとめてglobal\_tabかlocal\_tabに登録する．                                              & struct ID *                            & 成功は0，エラーは-1           \\
+      is\_valid\_param  & local\_tabを探索して仮引数内の型が標準型かどうか確認する．                                       & なし                                   & 成功は0，エラーは-1           \\
+      push              & 引数で与えられたheadにIDを追加する．                                                             & struct ID **, struct ID *              & なし                          \\
+      assign\_type      & 引数で与えられた記号表に型情報を付与する．                                                       & struct ID *, struct TYPE *             & なし                          \\
+      assign\_parameter & 引数で与えられた手続きの型情報に仮引数内の型情報を追加する．                                     & struct TYPE *                          & struct TYPE *                 \\
+      add\_refline      & 引数で与えられた記号表に参照行を追加する．                                                       & struct ID *, int                       & なし                          \\
+      get\_declared\_id & 引数で与えられた文字列からlocal\_tabとglobal\_tabを探索し，一致した記号表を返す．                & char *                                 & struct ID *                   \\
+      add\_cr\_table    & 引数で指定した番号に応じて(0ならlocal\_tab，1ならglobal\_tab)，クロスリファレンス表に追加する．  & int                                    & なし                          \\
+      clear\_table      & 引数で指定した番号に応じて(0ならlocal\_tab，1ならglobal\_tab，2ならcr\_tab)，表の削除を行う．    & int                                    & なし                          \\
+      print\_tab        & クロスリファレンス表cr\_tabの内容を標準出力する．                                                & なし                                   & なし                          \\ \hline
+    \end{tabular}}
+  \label{tab:cross_referencer_func}
+\end{table}
+
 
 \section{テスト情報}
-
 \subsection{テストデータ}
 \subsubsection{ブラックボックステスト}
 ブラックボックステストには用意されていたテストデータを用いた．テストデータを以下に示す．
@@ -114,6 +269,11 @@ scan関数でトークンを取得してLL(1)構文木を作成して利用す�
   \item sample27.mpl
   \item sample28p.mpl
   \item sample29p.mpl
+  \item sample31p.mpl
+  \item sample032p.mpl
+  \item sample33p.mpl
+  \item sample34.mpl
+  \item sample35.mpl
 \end{itemize}
 
 \subsubsection{ホワイトボックステスト}
@@ -133,34 +293,59 @@ docker環境でのブラックボックステストの結果を図\ref{fig:black
 ホワイトボックステストの結果を図\ref{fig:white_box_test}に示す．
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{assets/white_box_test.png}
+  \includegraphics[width=0.6\textwidth]{assets/white_box_test.png}
   \caption{ホワイトボックステストの結果}
   \label{fig:white_box_test}
 \end{figure}
 
 \subsection{テストデータの十分性}
+ブラックボックステストでは，制約規則のテストが通っているため，少なくとも仕様は満たしていると言える．
+ホワイトボックステストについては，図\ref{fig:white_box_test}より今回メインに実装したモジュールを見ると，cross\_referencer.cは命令網羅率が$89.77\%$，条件網羅率が$82.42\%$とやや高水準となっている．
+一方，parser.cは命令網羅率が$98.79\%$とかなり高く出たが，条件網羅率が$71.19\%$と相対的に小さくなっている．この2つのモジュールの結果から言えることは，
+条件網羅に関してはもう少しテストケースの改善の余地があると言える．だが，決して低い数値ではないため今回は良しとする．
 
 \section{課題のスケジュールと実際の進捗状況}
 \subsection{事前計画}
 \begin{table}[H]
   \centering
-  \caption{課題2の事前計画}
-  \begin{tabular}{cccp{7cm}}
+  \caption{課題3の事前計画}
+  \begin{tabular}{cccp{10cm}}
     \hline
-    開始日 & 終了日 & 予定工数(h) & 作業内容 \\ \hline
+    開始日 & 終了日 & 予定工数(h) & 作業内容                   \\ \hline
+    1/31   & 1/31   & 1           & 資料を読んで仕様をまとめる \\
+    1/31   & 1/31   & 2           & 意味解析系の概略設計       \\
+    1/31   & 2/2    & 20          & プログラムの作成           \\
+    2/1    & 2/3    & 5           & テスト                     \\
+    2/3    & 2/3    & 4           & レポートの作成             \\\hline
   \end{tabular}
 \end{table}
+
+\subsection{事前課題の立て方についての前課題からの改善点}
+前回は資料を読んでからプログラムの作成に移るまでに時間がかかってしまうスケジュールの組み方をしてしまった．
+ただでさえ着手が遅いにもかかわらず，読解の工程を作ってしまうとさらに遅くなってしまう．そのため，無理のない範囲で
+スケジュールをあえて詰めることで，ある程度の理解度まで達したらプログラム作成に着手できるようにした．
 
 \subsection{実際の進捗状況}
 \begin{table}[H]
   \centering
   \caption{課題3の事前計画}
-  \begin{tabular}{cccp{7cm}}
+  \begin{tabular}{cccp{10cm}}
     \hline
-    開始日 & 終了日 & 工数(h) & 作業内容 \\ \hline
+    開始日 & 終了日 & 工数(h) & 作業内容                   \\ \hline
+    1/31   & 1/31   & 2       & 資料を読んで仕様をまとめる \\
+    1/31   & 1/31   & 2       & 意味解析系の概略設計       \\
+    1/31   & 2/5    & 35      & プログラムの作成           \\
+    2/4    & 2/5    & 6       & テスト                     \\
+    2/5    & 2/6    & 6       & レポートの作成             \\ \hline
   \end{tabular}
 \end{table}
 
 \subsection{当初の事前計画と実際の進捗との差の原因}
+1つは，他の課題と並行して行うようなスケジュールを組んだつもりだったが，他の課題を素早く処理できなかったために
+本課題の完成にも時間がかかってしまった．そのため，課題に優先順位を付け，本課題を最優先にして進めるべきだった．
+また，課題を溜め込んでしまったことが全ての元凶なため，早期の着手を心掛ける必要があった．
+
+プログラムの作成に多くの時間がかかってしまったが，原因は細かいテストを行わずに一気に仕上げようとしてかえって詰まったことにある．
+そのため，次回は仕様を少しずつテストしながら進めたい．
 
 \end{document}
