@@ -16,3 +16,5 @@ build
 *.gcov
 *.gcda
 *.gcno
+
+h_sample
