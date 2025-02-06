@@ -6,6 +6,7 @@
 !Makefile
 *.a
 *.o
+test.*
 test_results
 *.pdf
 *.zip
