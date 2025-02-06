@@ -18,6 +18,7 @@ char* procname = NULL;
 int deflinenum = 0;
 int ttype = 0;
 int arrsize = 0;
+int num_flag = 0;            // whether it's unsigned integer, not variable
 int array_flag = 0;          // whether it's an array.
 struct ID* id = NULL;        // temporary id, which store elements when call parse_variable_names().
 struct ID* procid = NULL;    // temporary procedure id, which store an element when call parse_procedure_name().
@@ -507,6 +508,7 @@ int parse_left_part() {
 
 int parse_variable() {
   int type;
+  num_flag = 0;
 
   // task2
   // if (parse_variable_name() == ERROR) return ERROR;
@@ -533,6 +535,11 @@ int parse_variable() {
     if ((idx_type = parse_expression()) == ERROR) return ERROR;
 
     if (idx_type != TPINT) return error("Index of array must be integer");
+
+    if (num_flag) {
+      int idx = get_num();
+      if (idx < 0 || idx >= var->itp->arraysize) return error("Index of array is out of range");
+    }
 
     if (token != TRSQPAREN) return error("Right bracket(']') is not found");
     pretty_print();
@@ -648,9 +655,10 @@ int parse_constant() {
   int type;
   if (token != TNUMBER && token != TFALSE && token != TTRUE && token != TSTRING) return error("Constant is not found");
 
-  if (token == TNUMBER)
+  if (token == TNUMBER) {
     type = TPINT;
-  else if (token == TFALSE || token == TTRUE)
+    num_flag = 1;
+  } else if (token == TFALSE || token == TTRUE)
     type = TPBOOL;
   else if (token == TSTRING) {
     if (get_string_attr_len() != 1) return error("string length must be 1 in constant");
