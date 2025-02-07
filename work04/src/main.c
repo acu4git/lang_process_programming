@@ -1,4 +1,6 @@
-﻿#include "cross_referencer.h"
+﻿#include <string.h>
+
+#include "cross_referencer.h"
 #include "parser.h"
 #include "scan.h"
 
@@ -48,6 +50,8 @@ char *tokenstr[NUMOFTOKEN + 1] = {
     ":=", ".", ",", ":", ";", "read", "write",
     "break"};
 
+FILE *cslfp;
+
 int main(int nc, char *np[]) {
   if (nc < 2) {
     error("File name is not given.");
@@ -57,6 +61,27 @@ int main(int nc, char *np[]) {
     error("Cannot open input file.");
     end_scan();
     return 0;
+  }
+
+  // 出力ファイルに関する処理
+  char *filepath = np[1];
+  char *ptr = strrchr(filepath, '/');
+  if (ptr) {
+    ptr++;
+  } else {
+    ptr = filepath;
+  }
+
+  char *ex_dot = strrchr(ptr, '.');
+  if (ex_dot) *ex_dot = '\0';
+
+  char filename[64];
+  snprintf(filename, sizeof(filename), "%s.csl", ptr);
+  cslfp = fopen(filename, "w");
+  if (cslfp == NULL) {
+    fprintf(stderr, "Error: Failed to open output file \'%s\'\n", filename);
+    end_scan();
+    return 1;
   }
 
   init_tab();
