@@ -98,6 +98,8 @@ int main(int nc, char *np[]) {
   clear_table(IS_GLOBAL);
   clear_table(IS_CROSS);
 
+  fclose(cslfp);
+
   return 0;
 }
 
