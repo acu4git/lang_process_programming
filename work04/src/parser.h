@@ -6,7 +6,7 @@
 
 int parse();
 int parse_program();                  // プログラム
-int parse_block();                    // ブロック
+int parse_block(int);                 // ブロック
 int parse_variable_declaration();     // 変数宣言部
 int parse_variable_names();           // 変数名の並び
 int parse_variable_name();            // 変数名

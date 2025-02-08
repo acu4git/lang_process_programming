@@ -1,5 +1,6 @@
 #include "parser.h"
 
+#include "compiler.h"
 #include "cross_referencer.h"
 #include "parse_error.h"
 #include "scan.h"
@@ -29,21 +30,21 @@ struct ID* var = NULL;
 
 static void newline() {
   // putchar('\n');
-  // br_flag = 1;
+  br_flag = 1;
 }
 
 static void pretty_print() {
   // preprocessing
-  // if (br_flag == 1) {
-  //   for (int i = 0; i < indent_level; i++) {
-  //     printf("    ");
-  //   }
-  //   br_flag = 0;
-  // } else {
-  //   if (token != TSEMI && token != TDOT && token != TPROGRAM) {
-  //     printf(" ");
-  //   }
-  // }
+  if (br_flag == 1) {
+    // for (int i = 0; i < indent_level; i++) {
+    //   printf("    ");
+    // }
+    br_flag = 0;
+  } else {
+    // if (token != TSEMI && token != TDOT && token != TPROGRAM) {
+    //   printf(" ");
+    // }
+  }
 
   // if (token == TSTRING) {
   //   printf("'%s'", string_attr);
@@ -57,9 +58,9 @@ static void pretty_print() {
   //   printf("%s", tokenstr[token]);
   // }
 
-  // if ((token == TSEMI && formal_arg_flag == 0)) {
-  //   newline();
-  // }
+  if ((token == TSEMI && formal_arg_flag == 0)) {
+    newline();
+  }
 }
 
 void reset_ptr() {
@@ -76,16 +77,28 @@ int parse() {
 }
 
 int parse_program() {
+  int first_label;
+
   if (token != TPROGRAM) return error(ERRMSG_PROGRAM_NOT_FOUND);
   pretty_print();
   token = scan();
+
   if (token != TNAME) return error("Program name is not found");
+  char* progname = get_string();
   pretty_print();
   token = scan();
+
   if (token != TSEMI) return error("Semicolon(;) is not found");
   pretty_print();
   token = scan();
-  if (parse_block() == ERROR) return ERROR;
+
+  /**
+   * %%(PROGRAM_NAME)  START  L0001
+   */
+  first_label = get_label_num();
+  gen_start(progname, first_label);
+
+  if (parse_block(first_label) == ERROR) return ERROR;
   if (token != TDOT) return error("Period is not found at the end of program");
   pretty_print();
   newline();
@@ -93,7 +106,7 @@ int parse_program() {
   return NORMAL;
 }
 
-int parse_block() {
+int parse_block(int first_label) {
   while (token == TVAR || token == TPROCEDURE) {
     if (token == TVAR) {
       if (parse_variable_declaration() == ERROR) return ERROR;
@@ -106,6 +119,14 @@ int parse_block() {
     }
     reset_ptr();
   }
+
+  /**
+   * L0001
+   *   LAD  GR0,0
+   */
+  gen_label(first_label);
+  gen_lad_num("GR0", 0);
+
   if (parse_compound_statement() == ERROR) return ERROR;
   return NORMAL;
 }
@@ -126,7 +147,7 @@ int parse_variable_declaration() {
     token = scan();
     if (parse_type() == ERROR) return ERROR;
 
-    assign_type(id, tp);
+    assign_type(id, tp);  // generate variable define code simultaneously
     if (register_bulk(id) == ERROR) return ERROR;
     id = NULL;
 
@@ -235,6 +256,8 @@ int parse_array_type() {
 }
 
 int parse_subprogram_declaration() {
+  int has_parameter = 0;
+
   if (token != TPROCEDURE) return error(ERRMSG_PROCEDURE_NOT_FOUND);
 
   indent_level++;
@@ -254,7 +277,11 @@ int parse_subprogram_declaration() {
 
   procname = get_string();
 
-  if (token == TLPAREN && parse_formal_parameters() == ERROR) return ERROR;
+  // modified - task4
+  if (token == TLPAREN) {
+    has_parameter = 1;
+    if (parse_formal_parameters() == ERROR) return ERROR;
+  }
   if (token != TSEMI) return error("Semicolon(';') is not found");
 
   if (is_valid_param() == ERROR) return ERROR;
@@ -267,6 +294,14 @@ int parse_subprogram_declaration() {
   if (token == TVAR) {
     if (parse_variable_declaration() == ERROR) return ERROR;
   }
+
+  gen_proc(procid->label);
+  if (has_parameter) {
+    gen_code("POP", "GR2");  // return address
+    gen_param();             // get parameter
+    gen_code("PUSH", "0,GR2");
+  }
+
   if (parse_compound_statement() == ERROR) return ERROR;
   if (token != TSEMI) return error("Semicolon(';') is not found");
   pretty_print();
@@ -361,6 +396,7 @@ int parse_statement() {
 
 int parse_condition_statement() {
   int type;
+  int label1, label2;
 
   if (token != TIF) return error(ERRMSG_IF_NOT_FOUND);
   pretty_print();
@@ -368,6 +404,10 @@ int parse_condition_statement() {
 
   if ((type = parse_expression()) == ERROR) return ERROR;
   if (type != TPBOOL) return error("IF requires boolean");
+
+  label1 = get_label_num();
+  gen_code("CPA", "GR1,GR0");
+  gen_code_label("JZE", NULL, label1);
 
   if (token != TTHEN) return error(ERRMSG_THEN_NOT_FOUND);
   pretty_print();
@@ -377,6 +417,10 @@ int parse_condition_statement() {
 
   if (parse_statement() == ERROR) return ERROR;
   if (token == TELSE) {
+    label2 = get_new_label_num();
+    gen_code_label("JUMP", NULL, label2);
+    gen_label(label1);
+
     newline();
     indent_level--;
     pretty_print();
@@ -384,6 +428,10 @@ int parse_condition_statement() {
     indent_level++;
     token = scan();
     if (parse_statement() == ERROR) return ERROR;
+
+    gen_label(label2);
+  } else {
+    gen_label(label1);
   }
   indent_level--;
   return NORMAL;
@@ -451,26 +499,26 @@ int parse_call_statement() {
 
 int parse_expressions() {
   int type;
-  struct TYPE* param = var->itp->paratp;
-  if (param == NULL) return error("Procedure needs arguments");
+  struct TYPE* ptp = var->itp->paratp;
+  if (ptp == NULL) return error("Procedure needs arguments");
 
   if ((type = parse_expression()) == ERROR) return ERROR;
-  if (type != param->ttype) return error("Expression type is different to paratp");
+  if (type != ptp->ttype) return error("Expression type is different to paratp");
 
-  param = param->paratp;
+  ptp = ptp->paratp;
 
   while (token == TCOMMA) {
     pretty_print();
     token = scan();
     if ((type = parse_expression()) == ERROR) return ERROR;
-    if (param == NULL)
+    if (ptp == NULL)
       return error("Not correct number of dummy arguments");
-    if (type != param->ttype)  // types don't match
+    if (type != ptp->ttype)  // types don't match
       return error("Expression type is different to paratp");
 
-    param = param->paratp;
+    ptp = ptp->paratp;
   }
-  if (param != NULL) return error("Procedure requires arguments");
+  if (ptp != NULL) return error("Procedure requires arguments");
   return NORMAL;
 }
 
@@ -525,6 +573,8 @@ int parse_variable() {
   pretty_print();
   token = scan();
 
+  gen_lad("GR1", var->label, NULL);
+
   if (token == TLSQPAREN) {
     int idx_type;
     if (type != TPARRAYINT && type != TPARRAYBOOL && type != TPARRAYCHAR) return error("Expected standard type, but there is [] after variable name");
@@ -569,6 +619,14 @@ int parse_simple_expression() {
   int type, type1, type2, op;
 
   if (token == TPLUS || token == TMINUS) {
+    if (token == TMINUS) {
+      gen_ld("GR1", "0", "GR1");
+      gen_lad_num("GR2", 0);
+      gen_suba("GR2", "GR1", NULL);
+      gen_code("JOV", "EOVF");
+      gen_ld("GR1", "GR2", NULL);
+    }
+
     pretty_print();
     token = scan();
     flag = 1;
@@ -596,10 +654,24 @@ int parse_simple_expression() {
 int parse_term() {
   int type, type1, type2, op;
   if ((type = parse_factor()) == ERROR) return ERROR;
+
+  gen_code("PUSH", "0,GR1");
+
   while (token == TSTAR || token == TDIV || token == TAND) {
     type1 = type;
     if ((op = parse_multiplicative_operator()) == ERROR) return ERROR;
     if ((type2 = parse_factor()) == ERROR) return ERROR;
+
+    gen_code("POP", "GR2");
+
+    if (op == TSTAR) {
+      gen_code("MULA", "GR1,GR2");
+    } else if (op == TDIV) {
+      gen_code("DIVA", "GR2,GR1");
+      gen_code("LD", "GR1,GR2");
+    } else if (op == TAND) {
+      gen_code("AND", "GR1,GR2");
+    }
 
     if (op == TAND) {
       if (type1 != TPBOOL && type2 != TPBOOL) return error("AND operation requires two boolean");
@@ -614,6 +686,7 @@ int parse_term() {
 
 int parse_factor() {
   int type;
+  int label1, label2;
 
   if (token == TNAME) {
     if ((type = parse_variable()) == ERROR) return ERROR;
@@ -631,6 +704,18 @@ int parse_factor() {
     token = scan();
     if ((type = parse_factor()) == ERROR) return ERROR;
     if (type != TPBOOL) return error("Expected NOT followed by boolean, but not found boolean");
+
+    label1 = get_label_num();
+    label2 = get_label_num();
+
+    gen_code("CPL", "GR1,GR0");
+    gen_code_label("JZE", NULL, label1);
+    gen_lad_num("GR1", 0);
+    gen_code_label("JUMP", NULL, label2);
+    gen_label(label1);
+    gen_lad_num("GR1", 1);
+    gen_label(label2);
+
   } else if (token == TINTEGER || token == TBOOLEAN || token == TCHAR) {
     if ((type = parse_standard_type()) == ERROR) return ERROR;
     if (token != TLPAREN) return error("Left parenthesis('(') is not found");
@@ -641,10 +726,21 @@ int parse_factor() {
     if ((exp_type = parse_expression()) == ERROR) return ERROR;
 
     // typeとexp_typeの互換性も確認する...??
+    if (exp_type != TPINT && exp_type != TPCHAR && exp_type != TPBOOL) return error("Array type cannot be cast");
 
     if (token != TRPAREN) return error("Right parenthesis(')') is not found");
     pretty_print();
     token = scan();
+
+    if (exp_type == TPINT) {
+      if (type == TPCHAR) {
+        gen_lad("GR2", "#007F", NULL);
+        gen_and("GR1", "GR2", NULL);
+      } else if (type == TPBOOL) {
+      }
+    } else if (exp_type == TPCHAR) {
+    } else if (exp_type == TPBOOL) {
+    }
   }
 
   return type;
@@ -654,15 +750,23 @@ int parse_constant() {
   int type;
   if (token != TNUMBER && token != TFALSE && token != TTRUE && token != TSTRING) return error("Constant is not found");
 
+  char literal[MAXSTRSIZE] = "";
+
   if (token == TNUMBER) {
     type = TPINT;
     num_flag = 1;
-  } else if (token == TFALSE || token == TTRUE)
+    snprintf(literal, sizeof(literal), "=%d", get_num());
+  } else if (token == TFALSE || token == TTRUE) {
     type = TPBOOL;
-  else if (token == TSTRING) {
+    snprintf(literal, sizeof(literal), "=%d", (token == TTRUE) ? 1 : 0);
+  } else if (token == TSTRING) {
     if (get_string_attr_len() != 1) return error("string length must be 1 in constant");
     type = TPCHAR;
+    snprintf(literal, sizeof(literal), "='%s'", string_attr);
   }
+
+  gen_lad("GR1", literal, NULL);
+  gen_ld("GR1", "0", "GR1");
 
   pretty_print();
   token = scan();
@@ -743,13 +847,22 @@ int parse_output_statement() {
 
 int parse_output_format() {
   int type;
+
+  char literal[MAXSTRSIZE] = "";
+
   if (token == TSTRING && get_string_attr_len() != 1) {
+    type = TPCHAR;
+
     pretty_print();
     token = scan();
     if (token == TCOLON) return error("The string before the colon (:) must be a single character");
+
+    snprintf(literal, sizeof(literal), "='%s'", string_attr);
+    gen_lad("GR1", literal, NULL);
+    gen_lad_num("GR2", 0);
+    gen_code("CALL", "WRITESTR");
   } else {
     if ((type = parse_expression()) == ERROR) return ERROR;
-
     if (type != TPINT && type != TPBOOL && type != TPCHAR) return error("Expression must be standard type at output format");
 
     if (token == TCOLON) {
@@ -758,9 +871,24 @@ int parse_output_format() {
       if (token != TNUMBER) return error("Integer is not found");
       pretty_print();
       token = scan();
+      gen_lad_num("GR2", get_num());
+    } else {
+      gen_lad_num("GR2", 0);
+    }
+
+    switch (type) {
+      case TPINT:
+        gen_code("CALL", "WRITEINT");
+        break;
+      case TPCHAR:
+        gen_code("CALL", "WRITECHAR");
+        break;
+      case TPBOOL:
+        gen_code("CALL", "WRITEBOOL");
+        break;
     }
   }
-  return NORMAL;
+  return type;
 }
 
 int parse_empty_statement() {
