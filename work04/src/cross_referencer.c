@@ -1,5 +1,7 @@
 #include "cross_referencer.h"
 
+#include "compiler.h"
+
 struct ID *global_tab = NULL; /* Pointer to root of global symbol tables */
 struct ID *local_tab = NULL;  /* Pointer to root of local symbol tables */
 struct ID *cr_tab = NULL;     /* result table */
@@ -10,12 +12,50 @@ void init_tab() {
   cr_tab = NULL;
 }
 
+struct ID *get_tab(int n) {
+  struct ID *res = NULL;
+  switch (n) {
+    case IS_LOCAL:
+      res = local_tab;
+      break;
+    case IS_GLOBAL:
+      res = global_tab;
+      break;
+    case IS_CROSS:
+      res = cr_tab;
+      break;
+    default:
+      error("Invalid case at get_tab");
+      res = NULL;
+  }
+  return res;
+}
+
 struct ID *new_id(char *name, char *procname, int ispara, int deflinenum) {
   struct ID *p;
+  char *label;
   if ((p = (struct ID *)malloc(sizeof(struct ID))) == NULL) {
-    error("Failed to allocate memory");
+    error("Failed to allocate memory at new_id");
     return NULL;
   }
+
+  if ((label = (char *)malloc(sizeof(char) * (strlen(name) + strlen(procname) + 4))) == NULL) {
+    error("Failed to malloc for id label at new_id");
+  }
+
+  if (ispara) {
+    // $$(variable name)%(procname)
+    sprintf(label, "$$%s%%%s", name, procname);
+  } else {
+    if (procname == NULL) {
+      // $(variable name)
+      sprintf(label, "$%s", name);
+    } else {
+      // $(variable name)%(procname)
+      sprintf(label, "$%s%%%s", name, procname);
+    }
+  }
+
   p->name = name;
   p->procname = procname;
   p->itp = NULL;
@@ -23,6 +63,8 @@ struct ID *new_id(char *name, char *procname, int ispara, int deflinenum) {
   p->deflinenum = deflinenum;
   p->irefp = NULL;
   p->nextp = NULL;
+  p->label = label;
+
   return p;
 }
 
@@ -117,6 +159,13 @@ void push(struct ID **head, struct ID *id) {
 void assign_type(struct ID *idlist, struct TYPE *type) {
   for (struct ID *p = idlist; p != NULL; p = p->nextp) {
     p->itp = type;
+
+    // generate variable label
+    if (type->ttype == TPINT || type->ttype == TPCHAR || type->ttype == TPBOOL) {
+      gen_def_var(p->label, 0);
+    } else if (type->ttype != TPPROC) {
+      gen_def_var(p->label, p->itp->arraysize);
+    }
   }
 }
 

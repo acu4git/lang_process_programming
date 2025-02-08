@@ -49,9 +49,11 @@ struct ID {
   int deflinenum;     /* 定義行 */
   struct LINE *irefp; /* 参照行のリスト */
   struct ID *nextp;
+  char *label;  // label for casl
 }; /* Pointers to root of global & local symbol tables */
 
 void init_tab();
+struct ID *get_tab(int n);
 struct ID *new_id(char *name, char *procname, int ispara, int deflinenum);
 struct TYPE *new_type(int ttype, int arraysize, struct TYPE *etp, struct TYPE *paratp);
 void push(struct ID **head, struct ID *id);
