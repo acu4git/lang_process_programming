@@ -39,19 +39,23 @@ struct ID *new_id(char *name, char *procname, int ispara, int deflinenum) {
     return NULL;
   }
 
-  if ((label = (char *)malloc(sizeof(char) * (strlen(name) + strlen(procname) + 4))) == NULL) {
+  int namelen, procnamelen;
+  namelen = (name != NULL) ? strlen(name) : 0;
+  procnamelen = (procname != NULL) ? strlen(procname) : 0;
+
+  if ((label = (char *)malloc(sizeof(char) * (namelen + procnamelen + 4))) == NULL) {
     error("Failed to malloc for id label at new_id");
   }
 
   if (ispara) {
-    // $$(variable name)%(procname)
+    // 仮引数
     sprintf(label, "$$%s%%%s", name, procname);
   } else {
     if (procname == NULL) {
-      // $(variable name)
+      // 大域名
       sprintf(label, "$%s", name);
     } else {
-      // $(variable name)%(procname)
+      // 局所名
       sprintf(label, "$%s%%%s", name, procname);
     }
   }
@@ -150,9 +154,14 @@ void push(struct ID **head, struct ID *id) {
   if (*head == NULL) {
     *head = id;
   } else {
-    struct ID *p;
-    for (p = *head; p->nextp != NULL; p = p->nextp);
-    p->nextp = id;
+    if (id->ispara) {  // 参照渡しに対応させるため
+      id->nextp = *head;
+      *head = id;
+    } else {
+      struct ID *p;
+      for (p = *head; p->nextp != NULL; p = p->nextp);
+      p->nextp = id;
+    }
   }
 }
 

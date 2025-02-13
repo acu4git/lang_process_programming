@@ -20,5 +20,8 @@ void gen_lad_num(char *opr1, int n);
 void gen_suba(char *opr1, char *opr2, char *opr3);
 void gen_and(char *opr1, char *opr2, char *opr3);
 void gen_ret(void);
+void gen_end(void);
+void gen_comment(char *);
+void outlib(void);
 
 #endif

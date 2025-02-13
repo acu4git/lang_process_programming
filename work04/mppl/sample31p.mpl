@@ -10,6 +10,8 @@ procedure q(b:integer);
   var a : boolean;
       q : integer;
 begin
+	write('b = ');
+	writeln(b);
 	writeln('proc of q');
 	readln(q);
 	a := b = q;

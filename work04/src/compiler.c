@@ -12,7 +12,7 @@ int get_label_num() {
 }
 
 void gen_label(int label) {
-  fprintf(cslfp, "L%04d\n");
+  fprintf(cslfp, "L%04d\n", label);
 }
 
 void gen_code(char *opc, char *opr) {
@@ -20,7 +20,7 @@ void gen_code(char *opc, char *opr) {
 }
 
 void gen_code_label(char *opc, char *opr, int label) {
-  if (opr = NULL) {
+  if (opr == NULL) {
     fprintf(cslfp, "\t%s\tL%04d\n", opc, label);
   } else {
     fprintf(cslfp, "\t%s\t%s\tL%04d\n", opc, opr, label);
@@ -28,7 +28,7 @@ void gen_code_label(char *opc, char *opr, int label) {
 }
 
 void gen_start(char *progname, int label) {
-  fprintf(cslfp, "%%%%%s\tSTART\t%04d\n", progname, label);
+  fprintf(cslfp, "%%%%%s\tSTART\tL%04d\n", progname, label);
 }
 
 void gen_def_var(char *label, int n) {
@@ -74,8 +74,10 @@ void gen_st(char *opr1, char *opr2, char *opr3) {
 void gen_param() {
   struct ID *local_tab = get_tab(IS_LOCAL);
   for (struct ID *p = local_tab; p != NULL; p = p->nextp) {
-    gen_code("POP", "GR1");
-    gen_st("GR1", p->label, NULL);
+    if (p->ispara) {  // 仮引数となる変数にだけST命令を実行
+      gen_code("POP", "GR1");
+      gen_st("GR1", p->label, NULL);
+    }
   }
 }
 
@@ -103,21 +105,6 @@ void gen_ret() {
   fprintf(cslfp, "\tRET\n");
 }
 
-void gen_ADDA(char *opr1, char *opr2, char *opr3) {
-  if (opr3 == NULL) {
-    fprintf(cslfp, "\tADDA\t%s,%s\n", opr1, opr2);
-  } else {
-    fprintf(cslfp, "\tADDA\t%s,%s,%s\n", opr1, opr2, opr3);
-  }
-}
-
-void gen_ADDL(char *opr1, char *opr2, char *opr3) {
-  if (opr3 == NULL) {
-    fprintf(cslfp, "\tADDL\t%s,%s\n", opr1, opr2);
-  } else {
-    fprintf(cslfp, "\tADDL\t%s,%s,%s\n", opr1, opr2, opr3);
-  }
-}
 void gen_suba(char *opr1, char *opr2, char *opr3) {
   if (opr3 == NULL) {
     fprintf(cslfp, "\tSUBA\t%s,%s\n", opr1, opr2);
@@ -134,12 +121,12 @@ void gen_and(char *opr1, char *opr2, char *opr3) {
   }
 }
 
-void gen_SUBL(char *opr1, char *opr2, char *opr3) {
-  if (opr3 == NULL) {
-    fprintf(cslfp, "\tSUBL\t%s,%s\n", opr1, opr2);
-  } else {
-    fprintf(cslfp, "\tSUBL\t%s,%s,%s\n", opr1, opr2, opr3);
-  }
+void gen_end() {
+  fprintf(cslfp, "\tEND\n");
+}
+
+void gen_comment(char *mes) {
+  fprintf(cslfp, ";\t%s\n", mes);
 }
 
 // library

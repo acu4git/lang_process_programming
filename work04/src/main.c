@@ -89,12 +89,10 @@ int main(int nc, char *np[]) {
   // if (parse() == ERROR) {
   //   return 1;
   // }
-  parse();
+  int ret = parse();
   end_scan();
 
-  add_cr_table(IS_GLOBAL);
-  print_tab();
-
+  if (!ret) add_cr_table(IS_GLOBAL);
   clear_table(IS_GLOBAL);
   clear_table(IS_CROSS);
 

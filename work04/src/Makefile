@@ -1,4 +1,4 @@
-OBJS=main.o scan.o parser.o cross_referencer.o
+OBJS=main.o scan.o parser.o cross_referencer.o compiler.o
 CFLAGS = -g -Wall
 
 all: mpplc
